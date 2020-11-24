@@ -1,7 +1,9 @@
-use chrono::{DateTime, NaiveDateTime, TimeZone, Utc, FixedOffset, Local};
+use chrono::{DateTime, FixedOffset, Local, NaiveDateTime, TimeZone, Utc};
 use dtparse::parse;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
+use std::collections::hash_map::DefaultHasher;
 use std::fmt;
+use std::hash::{Hash, Hasher};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Event {
@@ -37,11 +39,35 @@ impl Event {
             content: "".to_string(),
         }
     }
+
+    pub fn calculate_hash(&self) -> u64 {
+        let mut s = DefaultHasher::new();
+        self.hash(&mut s);
+        s.finish()
+    }
 }
 
 impl fmt::Display for Event {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{0}\t{1}\t{2}", self.date.format("%Y-%m-%d %H:%M").to_string(), self.title, self.content)
+        write!(
+            f,
+            "{0:x}\t{1}\t{2}\t{3}",
+            self.calculate_hash(),
+            self.date
+                .with_timezone(&Local)
+                .format("%Y-%m-%d %H:%M")
+                .to_string(),
+            self.title,
+            self.content
+        )
+    }
+}
+
+impl Hash for Event {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.title.hash(state);
+        self.content.hash(state);
+        self.date.hash(state);
     }
 }
 
