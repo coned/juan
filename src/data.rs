@@ -4,9 +4,11 @@ use serde::{Deserialize, Serialize};
 use std::collections::hash_map::DefaultHasher;
 use std::fmt;
 use std::hash::{Hash, Hasher};
+use std::cmp::Ordering;
 
 
-#[derive(Debug, Serialize, Deserialize)]
+
+#[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
 pub struct Event {
     date: DateTime<Utc>,
     title: String,
@@ -55,8 +57,9 @@ impl fmt::Display for Event {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "{0:x}\t{1}\t{2}\t{3}",
+            "{0:x}\t{1}\t{2}\t{3}\t{4}",
             self.calculate_hash(),
+            self.priority,
             self.date
                 .with_timezone(&Local)
                 .format("%Y-%m-%d %H:%M")
@@ -72,6 +75,18 @@ impl Hash for Event {
         self.title.hash(state);
         self.content.hash(state);
         self.date.hash(state);
+    }
+}
+
+impl Ord for Event {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.priority.cmp(&other.priority).reverse()
+    }
+}
+
+impl PartialOrd for Event {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }
 

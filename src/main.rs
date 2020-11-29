@@ -27,6 +27,7 @@ enum Juan {
     Add {
         time: String,
         title: String,
+        priority: Option<u8>,
     },
     Init,
     List,
@@ -34,22 +35,6 @@ enum Juan {
         #[structopt(parse(try_from_str = parse_hex))]
         id: u64,
     },
-    // Test {
-    //     test_str: String,
-    // }
-    // Fetch {
-    //     #[structopt(long)]
-    //     dry_run: bool,
-    //     #[structopt(long)]
-    //     all: bool,
-    //     repository: Option<String>,
-    // },
-    // Commit {
-    //     #[structopt(short)]
-    //     message: Option<String>,
-    //     #[structopt(short)]
-    //     all: bool,
-    // },
 }
 
 fn main() {
@@ -57,8 +42,8 @@ fn main() {
 
     // let mut line = String::new();
     match opt.cmd {
-        Juan::Add { ref time, ref title } => {
-            add_com(&time, &title);
+        Juan::Add { ref time, ref title, priority } => {
+            add_com(&time, &title, priority);
         }
         Juan::Init => {
             init_com();
@@ -71,7 +56,7 @@ fn main() {
         }
         _ => println!("ELSE!"),
     }
-    println!("{:?}", opt);
+    // println!("{:?}", opt);
 }
 
 fn get_data() -> Vec<Event> {
@@ -83,7 +68,7 @@ fn get_data() -> Vec<Event> {
         .unwrap();
 
     let mut contents = String::new();
-    file.read_to_string(&mut contents);
+    file.read_to_string(&mut contents).unwrap();
 
     serde_yaml::from_str(&contents).unwrap()
 }
@@ -100,12 +85,13 @@ fn write_data(data_set: Vec<Event>) {
     file.write(serialized.as_bytes()).unwrap();
 }
 
-fn add_com(time: &str, title: &str) {
+fn add_com(time: &str, title: &str, priority: Option<u8>) {
     let mut data_set: Vec<Event> = get_data();
 
-    let event = Event::from_info(time, title, 2);
+    let event = Event::from_info(time, title, priority.unwrap_or(2));
     println!("One event added:\n{}", event);
     data_set.push(event);
+    data_set = sort_data(data_set);
 
     write_data(data_set);
 }
@@ -134,7 +120,14 @@ fn finish_com(id: u64) {
     let mut data_set: Vec<Event> = get_data();
 
     data_set.retain(|e| e.calculate_hash() != id);
+    data_set.retain(|e| (e.calculate_hash() >> 48) != id);
     println!("Congratulations!");
     println!("{} event(s) left.", data_set.len());
+
     write_data(data_set);
+}
+
+fn sort_data(mut data_set: Vec<Event>) -> Vec<Event> {
+    data_set.sort();
+    data_set
 }
