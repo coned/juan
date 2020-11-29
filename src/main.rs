@@ -2,8 +2,8 @@
 use juan::data::Event;
 use std::fs;
 use std::io::{self, Read, Write};
-use structopt::StructOpt;
 use std::num::ParseIntError;
+use structopt::StructOpt;
 
 fn parse_hex(input: &str) -> Result<u64, ParseIntError> {
     u64::from_str_radix(input, 16)
@@ -24,13 +24,19 @@ struct Opt {
 #[derive(StructOpt, Debug)]
 #[structopt()]
 enum Juan {
-    Add,
+    Add {
+        time: String,
+        title: String,
+    },
     Init,
     List,
     Finish {
         #[structopt(parse(try_from_str = parse_hex))]
         id: u64,
     },
+    // Test {
+    //     test_str: String,
+    // }
     // Fetch {
     //     #[structopt(long)]
     //     dry_run: bool,
@@ -51,8 +57,8 @@ fn main() {
 
     // let mut line = String::new();
     match opt.cmd {
-        Juan::Add => {
-            add_com();
+        Juan::Add { ref time, ref title } => {
+            add_com(&time, &title);
         }
         Juan::Init => {
             init_com();
@@ -65,7 +71,7 @@ fn main() {
         }
         _ => println!("ELSE!"),
     }
-    // println!("{:?}", opt);
+    println!("{:?}", opt);
 }
 
 fn get_data() -> Vec<Event> {
@@ -94,22 +100,10 @@ fn write_data(data_set: Vec<Event>) {
     file.write(serialized.as_bytes()).unwrap();
 }
 
-fn add_com() {
+fn add_com(time: &str, title: &str) {
     let mut data_set: Vec<Event> = get_data();
 
-    let mut time = String::new();
-    print!("time (today): ");
-    io::stdout().flush().unwrap();
-    io::stdin().read_line(&mut time).unwrap();
-    time.pop();
-
-    let mut title = String::new();
-    print!("title: ");
-    io::stdout().flush().unwrap();
-    io::stdin().read_line(&mut title).unwrap();
-    title.pop();
-
-    let event = Event::from_str(&time, &title);
+    let event = Event::from_info(time, title, 2);
     println!("One event added:\n{}", event);
     data_set.push(event);
 
@@ -140,7 +134,6 @@ fn finish_com(id: u64) {
     let mut data_set: Vec<Event> = get_data();
 
     data_set.retain(|e| e.calculate_hash() != id);
-    
     println!("Congratulations!");
     println!("{} event(s) left.", data_set.len());
     write_data(data_set);

@@ -5,11 +5,13 @@ use std::collections::hash_map::DefaultHasher;
 use std::fmt;
 use std::hash::{Hash, Hasher};
 
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Event {
     date: DateTime<Utc>,
     title: String,
     content: String,
+    priority: u8,
 }
 
 impl Event {
@@ -18,6 +20,7 @@ impl Event {
             date: Utc::now(),
             title: "".to_string(),
             content: "".to_string(),
+            priority: 2,
         }
     }
 
@@ -31,12 +34,13 @@ impl Event {
         }
     }
 
-    pub fn from_str(time: &str, title: &str) -> Event {
+    pub fn from_info(time: &str, title: &str, priority: u8) -> Event {
         let correct_time = Event::parse_from_str(time).unwrap();
         Event {
             date: correct_time,
             title: title.to_string(),
             content: "".to_string(),
+            priority: priority,
         }
     }
 
