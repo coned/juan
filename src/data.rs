@@ -5,7 +5,7 @@ use std::collections::hash_map::DefaultHasher;
 use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::cmp::Ordering;
-
+use colored::*;
 
 
 #[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
@@ -64,7 +64,7 @@ impl fmt::Display for Event {
                 .with_timezone(&Local)
                 .format("%Y-%m-%d %H:%M")
                 .to_string(),
-            self.title,
+            self.title.green(),
             self.content
         )
     }
